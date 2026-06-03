@@ -1,0 +1,15 @@
+name: snt_stable
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - scikit-image
+  - matplotlib
+  - nibabel
+  - pip
+  - pip:
+      - itk-elastix
+      - pyvista
