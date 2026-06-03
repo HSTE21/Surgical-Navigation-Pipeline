@@ -439,3 +439,42 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Python distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local History for Visual Studio Code
+.history/
+.vscode/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+
