@@ -9,7 +9,10 @@ dependencies:
   - scikit-image
   - matplotlib
   - nibabel
+  - pyqt
   - pip
   - pip:
       - itk-elastix
       - pyvista
+      - pyvistaqt
+      - pyigtl
