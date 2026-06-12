@@ -435,61 +435,75 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
 
     # ── Registratie helpers ───────────────────────────────────────
     def compute_registration(self):
-        P = np.array(self.ndi_points)    # 4×3 NDI-punten (probe-tip)
-        Q = np.array(self.target_points) # 4×3 CT-punten
+        P = np.array(self.ndi_points, dtype=np.float64)     # 4×3 NDI-punten (probe-tip)
+        Q = np.array(self.target_points, dtype=np.float64)  # 4×3 CT-punten
+
+        if P.shape != (4, 3) or Q.shape != (4, 3):
+            self.status_lbl.setText("Registratiefout: verwacht 4 punten in 3D.")
+            return
 
         # ── Stap 1: uniforme schaling via alle 6 puntenpaar-afstanden ──
-        pairs    = list(combinations(range(4), 2))
-        dists_P  = np.array([np.linalg.norm(P[i] - P[j]) for i, j in pairs])
-        dists_Q  = np.array([np.linalg.norm(Q[i] - Q[j]) for i, j in pairs])
-        scale    = float(np.mean(dists_Q / dists_P))
+        pairs = list(combinations(range(4), 2))
+        dists_P = np.array([np.linalg.norm(P[i] - P[j]) for i, j in pairs], dtype=np.float64)
+        dists_Q = np.array([np.linalg.norm(Q[i] - Q[j]) for i, j in pairs], dtype=np.float64)
 
+        if np.any(dists_P < 1e-9):
+            self.status_lbl.setText("Registratiefout: dubbele of te dichte NDI-punten.")
+            return
+
+        scale = float(np.mean(dists_Q / dists_P))
         P_scaled = P * scale
 
-        # ── Stap 2: Z-rotatie via SVD op XY-vlak ──────────────────
+        # ── Stap 2: volledige 3D-rotatie via Kabsch/SVD/procrustes ───────────────
         cP = np.mean(P_scaled, axis=0)
-        cQ = np.mean(Q,        axis=0)
+        cQ = np.mean(Q, axis=0)
+
         Pc = P_scaled - cP
-        Qc = Q        - cQ
+        Qc = Q - cQ
 
-        H_xy = Pc[:, :2].T @ Qc[:, :2]   # 2×2
-        U2, _, Vt2 = np.linalg.svd(H_xy)
-        R2 = Vt2.T @ U2.T
-        if np.linalg.det(R2) < 0:
-            Vt2[1, :] *= -1
-            R2 = Vt2.T @ U2.T
+        H = Pc.T @ Qc
+        U, _, Vt = np.linalg.svd(H)
+        R_mat = Vt.T @ U.T
 
-        c_r, s_r = R2[0, 0], R2[1, 0]
-        angle = np.degrees(np.arctan2(s_r, c_r))
-        R_mat = np.array([[c_r, -s_r, 0.],
-                          [s_r,  c_r, 0.],
-                          [0.,   0.,  1.]])
+        if np.linalg.det(R_mat) < 0:
+            Vt[-1, :] *= -1
+            R_mat = Vt.T @ U.T
 
-        # ── Stap 3: volledige XYZ-translatie via zwaartepunt ──────
+        # ── Stap 3: translatie ────────────────────────────────────────
+        t_reg = cQ - R_mat @ cP
+
+        # ── Stap 4: FRE ───────────────────────────────────────────────
         P_rot = (R_mat @ P_scaled.T).T
-        t_reg = np.mean(Q - P_rot, axis=0)
-
-        # ── Stap 4: FRE ───────────────────────────────────────────
         P_final = P_rot + t_reg
-        errors  = np.linalg.norm(P_final - Q, axis=1)
-        fre     = float(np.mean(errors))
+        errors = np.linalg.norm(P_final - Q, axis=1)
+        fre = float(np.mean(errors))
+
+        # Euler-hoeken voor logging / GUI
+        try:
+            euler_zyx = R.from_matrix(R_mat).as_euler("ZYX", degrees=True)
+            yaw, pitch, roll = euler_zyx
+        except Exception:
+            yaw, pitch, roll = np.nan, np.nan, np.nan
 
         self.registration_matrix = (R_mat, t_reg, scale)
         self._calc_thread.set_registration(R_mat, t_reg, scale)
 
-        msg = (f"Registratie OK | "
-               f"Yaw: {angle:.1f}° | "
-               f"Scale: {scale:.4f} | "
-               f"FRE: {fre:.2f} mm {'✓' if fre < 2 else '⚠ TE GROOT ↺'}")
+        msg = (
+            f"Registratie OK | "
+            f"Rz: {yaw:.1f}° | Ry: {pitch:.1f}° | Rx: {roll:.1f}° | "
+            f"Scale: {scale:.4f} | "
+            f"FRE: {fre:.2f} mm {'✓' if fre < 2 else '⚠ TE GROOT ↺'}"
+        )
         self.status_lbl.setText(msg)
 
-        print(f"\n=== REGISTRATIE ===")
+        print("\n=== REGISTRATIE ===")
         print(f"  Schaling:    {scale:.6f}")
-        print(f"  Z-rotatie:   {angle:.3f}°")
+        print(f"  Rotatie ZYX: yaw={yaw:.3f}°, pitch={pitch:.3f}°, roll={roll:.3f}°")
+        print(f"  R-matrix:\n{R_mat}")
         print(f"  Translatie:  {t_reg}")
         for i, e in enumerate(errors):
             print(f"  Corner {i+1}:  {e:.2f} mm")
-        print(f"  FRE:         {fre:.2f} mm {'OK' if fre < 2 else 'TE GROOT'}")
+        print(f"  FRE:         {fre:.2f} mm")
 
     def on_next_clicked(self):
         with self._display_lock:
