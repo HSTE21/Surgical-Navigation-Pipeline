@@ -4,6 +4,7 @@ import pyigtl
 import time
 import pandas as pd
 import threading
+import os
 from datetime import datetime
 
 HOST = "130.89.204.125"
@@ -92,6 +93,11 @@ class NDIDataCapture:
     
     def save_csv(self, filename="ndi_capture.csv"):
         """Save dataframe to CSV"""
+        # Zorg dat de map bestaat
+        directory = os.path.dirname(os.path.abspath(filename))
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            
         df = self.get_dataframe()
         df.to_csv(filename, index=False)
         print(f"✓ Opgeslagen: {filename}")
@@ -102,8 +108,11 @@ def main():
     print("Druk op Enter om events te markeren (Ctrl+C om te stoppen)")
     capture.start()
     
-    # Na stoppen: toon dataframe en sla op
-    df = capture.save_csv()
+    # Na stoppen: toon dataframe en sla op in data/ndi_captures
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    default_path = os.path.join(current_dir, "..", "..", "data", "ndi_captures", "ndi_capture.csv")
+    
+    df = capture.save_csv(default_path)
     print(f"\n{len(df)} rijen verzameld")
     print(df.head(10))
 

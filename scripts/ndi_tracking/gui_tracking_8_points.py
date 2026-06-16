@@ -1,3 +1,5 @@
+# To do: add cube implentation of the detected points for registration. 
+
 import sys
 import os
 import json
@@ -157,6 +159,8 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
         self.registration_matrix = None
         self.current_step       = -1
         self.corners_voxels     = []
+        self.total_capture_count = 0
+        self.repeats            = 5
         self.pointer_actor      = None
         self.highlight_actor    = None
         self.trajectory_actors  = []
@@ -435,31 +439,23 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
 
     # ── Registratie helpers ───────────────────────────────────────
     def compute_registration(self):
-        P = np.array(self.ndi_points, dtype=np.float64)     # 4×3 NDI-punten (probe-tip)
-        Q = np.array(self.target_points, dtype=np.float64)  # 4×3 CT-punten
+        P = np.array(self.ndi_points, dtype=np.float64)     # N×3 NDI-punten (probe-tip)
+        Q = np.array(self.target_points, dtype=np.float64)  # N×3 CT-punten
 
-        if P.shape != (4, 3) or Q.shape != (4, 3):
-            self.status_lbl.setText("Registratiefout: verwacht 4 punten in 3D.")
+        if P.ndim != 2 or Q.ndim != 2 or P.shape != Q.shape or P.shape[1] != 3 or P.shape[0] < 3:
+            self.status_lbl.setText("Registratiefout: verwacht minimaal 3 corresponderende punten in 3D.")
             return
 
-        print("\n=== Geselecteerde punten ===")
-        print("NDI punten (probe-tips):")
+        print("\n=== DEBUG: Geselecteerde punten ===")
+        print(f"NDI punten (probe-tips): {P.shape[0]} stuks")
         for i, p in enumerate(P):
             print(f"  {i+1}: {p}")
-        print("Target punten (CT hoeken):")
+        print(f"Target punten (CT hoeken): {Q.shape[0]} stuks")
         for i, q in enumerate(Q):
             print(f"  {i+1}: {q}")
 
-        # ── Stap 1: uniforme schaling via alle 6 puntenpaar-afstanden ──
-        pairs = list(combinations(range(4), 2))
-        dists_P = np.array([np.linalg.norm(P[i] - P[j]) for i, j in pairs], dtype=np.float64)
-        dists_Q = np.array([np.linalg.norm(Q[i] - Q[j]) for i, j in pairs], dtype=np.float64)
-
-        if np.any(dists_P < 1e-9):
-            self.status_lbl.setText("Registratiefout: dubbele of te dichte NDI-punten.")
-            return
-
-        scale = float(np.mean(dists_Q / dists_P))
+        # ── Stap 1: vaste schaal toepassen ─────────────────────────────
+        scale = 4.0
         P_scaled = P * scale
 
         # ── Stap 2: volledige 3D-rotatie via Kabsch/SVD/procrustes ───────────────
@@ -520,10 +516,11 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
             self.status_lbl.setText("Fout: Geen NDI data ontvangen!")
             return
         tip = mat[:3, :3] @ self.probe_offset + mat[:3, 3]
+        target_idx = self.current_step % len(self.corners_voxels)
         self.ndi_points.append(tip)
-        self.target_points.append(self.corners_voxels[self.current_step])
+        self.target_points.append(self.corners_voxels[target_idx])
         self.current_step += 1
-        if self.current_step == 4:
+        if self.current_step == self.total_capture_count:
             self.compute_registration()
         self.update_ui_state()
 
@@ -545,12 +542,11 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
             self.entry_voxel = np.array(data["entry"])
             self.beads_voxels = np.array(data["beads"])
 
-            # Select specific corners by index (3, 4, 7, 8 -> indices 2, 3, 6, 7)
-            # This ensures they align perfectly with the white spheres from JSON
-            self._reg_idx = np.array([2, 3, 6, 7])
-            self.corners_voxels = all_corners[self._reg_idx]
-            
-            print(f"Registratie corners (3, 4, 7, 8): indices {self._reg_idx+1}")
+            # Gebruik alle acht hoekpunten voor registratie
+            self._reg_idx = np.arange(len(all_corners))
+            self.corners_voxels = all_corners.copy()
+            self.total_capture_count = len(self.corners_voxels) * self.repeats
+            print(f"Registratie corners: alle {len(self.corners_voxels)} punten gebruikt, {self.repeats} rondes = {self.total_capture_count} captures")
 
             self.plotter.set_background("black")
 
@@ -608,10 +604,13 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
 
     # ── UI state ──────────────────────────────────────────────────
     def update_ui_state(self):
-        if self.current_step < 4:
-            pt      = self.corners_voxels[self.current_step]
+        if self.current_step < self.total_capture_count:
+            target_idx = self.current_step % len(self.corners_voxels)
+            round_idx  = (self.current_step // len(self.corners_voxels)) + 1
+            pt         = self.corners_voxels[target_idx]
             self.instr_lbl.setText(
-                f"TOUCH CORNER {self.current_step+1}  ({self.current_step+1}/4)\n"
+                f"TOUCH CORNER {target_idx+1}  ({self.current_step+1}/{self.total_capture_count})\n"
+                f"Ronde {round_idx}/{self.repeats}\n"
                 f"({pt[0]:.0f}, {pt[1]:.0f}, {pt[2]:.0f})")
             self.next_btn.setEnabled(True)
             if self.highlight_actor:
@@ -620,6 +619,10 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
                 pv.Sphere(center=pt, radius=9), color="lime", opacity=0.7)
         else:
             self.instr_lbl.setText("LIVE NAVIGATIE")
+            self.next_btn.hide()
+            if self.highlight_actor:
+                self.plotter.remove_actor(self.highlight_actor)
+                self.highlight_actor = None
             self.next_btn.hide()
             if self.highlight_actor:
                 self.plotter.remove_actor(self.highlight_actor)

@@ -81,6 +81,16 @@ These scripts form the final working pipeline:
 3. **`scripts/visualize_intraop_trajectories.py`**: 3D PyVista validation. Shows the **warped Pre-op plan** and transformed surgical paths (yellow) overlaid on the patient's Intra-op coordinate space.
 4. **`scripts/assess_registration_accuracy.py`**: Final quantitative report (TRE) comparing the transformed plan vs. ground-truth markers in the Intra-op scan.
 
+### NDI Tracking & Real-time Navigation
+
+Located in `scripts/ndi_tracking/`, these tools interface with the NDI Electromagnetic (EM) tracking system for real-time guidance:
+
+- **`read_ndi_stream.py`**: A CLI tool to test the connection and log tracking data. Pressing Enter marks specific "events" in the data stream. Logs are saved to `data/ndi_captures/`.
+- **`gui_tracking_basic.py`**: Real-time 3D visualization of the EM sensor using PyVista and OpenIGTLink.
+- **`gui_tracking_8_points.py`**: Validation tool that guides the user to touch 8 specific points (e.g., box corners) for accuracy assessment.
+- **`gui_offline_testing.py`**: A simulation/testing environment for verifying registration logic with pre-recorded or simulated tracking data.
+- **`ndi_emulator.py`**: Simulates an NDI OpenIGTLink server for development without physical hardware.
+
 ### Development & Research Scripts
 
 - **`scripts/get_box_corners_v2.py`**: Source for the histogram boundary detection logic. (Imported by `register_and_transform.py`).
