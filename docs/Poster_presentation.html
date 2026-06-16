@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Poster: Surgical Navigation Technology</title>
+    
+    <!-- MathJax Configuration -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --sky-500: #0ea5e9;
+            --sky-400: #38bdf8;
+            --emerald-500: #10b981;
+            --emerald-600: #059669;
+            --rose-500: #f43f5e;
+            --bg-slate: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-dark: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-slate);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Landscape A1 Proportionate Container - CLEAN FULL SCREEN */
+        .poster-canvas {
+            background-color: var(--bg-slate);
+            width: 100%;
+            max-width: 1680px;
+            min-height: 100vh;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0;
+        }
+
+        /* Glowing Tech-Line Accent at Top */
+        .top-glow {
+            height: 8px;
+            background: linear-gradient(90deg, var(--sky-500), var(--emerald-500), var(--sky-400));
+        }
+
+        /* HEADER BLOCK */
+        .poster-header {
+            background-color: var(--slate-900);
+            color: white;
+            padding: 50px 60px;
+            position: relative;
+            background-image: radial-gradient(circle at top right, rgba(14, 165, 233, 0.15), transparent 45%);
+        }
+
+        .poster-header h1 {
+            font-size: 46px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .poster-header h1 span {
+            background: linear-gradient(90deg, #38bdf8, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .course-badge {
+            display: inline-block;
+            background: rgba(14, 165, 233, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--sky-400);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 15px;
+        }
+
+        .meta-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+        }
+
+        .authors-list {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .authors-list span {
+            color: #94a3b8;
+            font-weight: 400;
+            font-size: 18px;
+            margin-left: 5px;
+        }
+
+        .institution-details {
+            font-size: 18px;
+            color: #94a3b8;
+            text-align: right;
+            line-height: 1.4;
+        }
+
+        /* SYSTEM WORKFLOW AREA */
+        .poster-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+            flex-grow: 1;
+        }
+
+        .poster-column {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* CARD COMPONENT */
+        .poster-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        .poster-card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--slate-900);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .poster-card h3::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 22px;
+            background-color: var(--sky-500);
+            border-radius: 2px;
+        }
+
+        .poster-card p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-main);
+            margin-bottom: 14px;
+        }
+
+        .poster-card strong {
+            color: var(--slate-900);
+        }
+
+        .poster-card ul {
+            list-style: none;
+            margin-bottom: 14px;
+        }
+
+        .poster-card li {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .poster-card li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--sky-500);
+            font-weight: bold;
+        }
+
+        /* MATH TYPOGRAPHY STYLE */
+        .math-block {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--sky-500);
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 0 6px 6px 0;
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+            overflow-x: auto;
+        }
+
+        /* DATA TABLES FOR RESULTS */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 15px;
+        }
+
+        .results-table th {
+            background-color: var(--slate-800);
+            color: white;
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+        }
+
+        .results-table th:first-child { border-top-left-radius: 6px; }
+        .results-table th:last-child { border-top-right-radius: 6px; }
+
+        .results-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        .results-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: 2px solid var(--slate-700);
+        }
+
+        /* GUI IMAGE BOX */
+        .gui-image-container {
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .gui-image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .gui-image-caption {
+            background-color: #1e293b;
+            color: #cbd5e1;
+            width: 100%;
+            padding: 10px;
+            font-size: 13px;
+            font-family: monospace;
+            border-top: 1px solid #334155;
+        }
+
+        /* UNIFIED FLOWCHART STYLES */
+        .flow-wrapper {
+            background-color: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            padding: 25px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            width: 100%;
+        }
+        .flow-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            gap: 20px;
+        }
+        .flow-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+        .flow-node {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #f8fafc;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 220px;
+        }
+        .flow-node.highlight-blue { border-color: #0ea5e9; border-left: 5px solid #0ea5e9; }
+        .flow-node.highlight-green { border-color: #10b981; border-left: 5px solid #10b981; }
+        .flow-node.highlight-red { border-color: #f43f5e; border-left: 5px solid #f43f5e; }
+        .flow-node.highlight-slate { border-color: #94a3b8; border-left: 5px solid #94a3b8; background-color: #334155; }
+        
+        .flow-node strong { display: block; font-size: 14px; margin-bottom: 5px; color: #ffffff; }
+        .flow-node span { display: block; font-size: 11px; color: #cbd5e1; font-family: monospace; line-height: 1.3;}
+        
+        .flow-arrow {
+            color: #64748b;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flow-arrow.vertical {
+            transform: rotate(90deg);
+            margin: 2px 0;
+        }
+        .flow-caption {
+            font-family: monospace;
+            font-size: 13px;
+            color: #38bdf8;
+            margin-top: 20px;
+            text-align: center;
+            border-top: 1px solid #334155;
+            padding-top: 10px;
+            width: 90%;
+        }
+
+        .footer-references {
+            font-size: 13px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="poster-canvas">
+        <div class="top-glow"></div>
+        
+        <!-- HEADER BLOCK -->
+        <header class="poster-header">
+            <div class="course-badge">Surgical Navigation Technology (201000262)</div>
+            <h1>Automated Marker Detection, Dual-Registration, and Trajectory Validation for <span>Image Guided Surgery using EM Tracking</span></h1>
+            
+            <div class="meta-container">
+                <div class="authors-list">
+                    Hans Stegehuis <span>(M1 Student)</span> &amp; Ghid al-Semaan <span>(M1 Student)</span>
+                </div>
+                <div class="institution-details">
+                    Department of Technical Medicine &mdash; Medical Imaging &amp; Interventions<br>
+                    University of Twente, Enschede, The Netherlands
+                </div>
+            </div>
+        </header>
+
+        <!-- POSTER CONTENT BODY -->
+        <div class="poster-body">
+            
+            <!-- COLUMN 1: INTRO & SEGMENTATION -->
+            <div class="poster-column">
+                
+                <div class="poster-card">
+                    <h3>1. Introduction &amp; Objectives</h3>
+                    <p><strong>Clinical Motivation:</strong> High-precision surgical navigation requires instantaneous point mapping to align pre-operative planning profiles with the dynamic intra-operative patient context.</p>
+                    <p><strong>System Deliverable:</strong> An integrated, low-latency surgical framework utilizing EM sensor systems to translate physical instrument coordinates into 3D rendering domains.</p>
+                    <p><strong>Core Research Question:</strong> Can an algorithmic pipeline successfully combine density analysis with dual-pass image registration to automate coordinate alignment and eliminate manual point registration bias?</p>
+                </div>
+
+                <div class="poster-card">
+                    <h3>2. Pre-Operative Auto-Segmentation</h3>
+                    <p>To establish target arrays from Pre-op CT imaging, an automated segmentation workflow extracts anatomical landmarks while minimizing the intrinsic <strong>Fiducial Localization Error (FLE)</strong>:</p>
+                    <ul>
+                        <li><strong>Phantom Boundaries:</strong> Volumes are filtered using an structural intensity mask:
+                            <div class="math-block">
+                                $$665 \text{ HU} \leq I(x, y, z) \leq 3850 \text{ HU}$$
+                            </div>
+                        </li>
+                        <li><strong>Histogram Density Extraction:</strong> Cumulative voxel arrays are aggregated along orthogonal axes. Container limits are calculated where densities exceed 1% of peak levels.</li>
+                        <li><strong>KDTree Snapping:</strong> Calculated face coordinates are mapped to the closest physical voxel shell location via spatial distance trees to reduce localization errors:
+                            <div class="math-block">
+                                $$\arg\min_{p \in V_{box}} \| p - p_{calc} \|_2$$
+                            </div>
+                        </li>
+                        <li><strong>Fiducial Spheres Clustering:</strong> Highly dense target beads ($I \gt 3820 \text{ HU}$) are extracted via watershed filtering, retaining the 10 largest volumes prior to iterative proximity merging.</li>
+                    </ul>
+
+                    <!-- HOMOGENEOUS FLOWCHART 1 -->
+                    <div class="flow-wrapper">
+                        <!-- Input -->
+                        <div class="flow-node highlight-slate" style="max-width: 260px;">
+                            <strong>Raw Pre-Op CT Volume</strong>
+                            <span>Intensity Data f(x,y,z)</span>
+                        </div>
+                        <div class="flow-arrow vertical">→</div>
+                        
+                        <!-- Parallel Tracks -->
+                        <div class="flow-row">
+                            <!-- Box Track -->
+                            <div class="flow-col">
+                                <div class="flow-node highlight-blue">
+                                    <strong>Box Boundaries</strong>
+                                    <span>Threshold 665-3850 HU</span>
+                                </div>
+                                <div class="flow-arrow vertical">→</div>
+                                <div class="flow-node highlight-blue">
+                                    <strong>Voxel Density</strong>
+                                    <span>Axial Histograms &gt;1%</span>
+                                </div>
+                                <div class="flow-arrow vertical">→</div>
+                                <div class="flow-node highlight-blue">
+                                    <strong>KDTree Snapping</strong>
+                                    <span>Snap to Surface Voxel</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Bead Track -->
+                            <div class="flow-col">
+                                <div class="flow-node highlight-green">
+                                    <strong>Fiducial Beads</strong>
+                                    <span>Threshold &gt;3820 HU</span>
+                                </div>
+                                <div class="flow-arrow vertical">→</div>
+                                <div class="flow-node highlight-green">
+                                    <strong>Watershed Split</strong>
+                                    <span>Morph. Opening (rad 2)</span>
+                                </div>
+                                <div class="flow-arrow vertical">→</div>
+                                <div class="flow-node highlight-green">
+                                    <strong>Proximity Merge</strong>
+                                    <span>Agglomerative Clustering</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flow-arrow vertical">→</div>
+                        <!-- Output -->
+                        <div class="flow-node highlight-slate" style="max-width: 260px;">
+                            <strong>JSON Target Matrix</strong>
+                            <span>8 Corners, 5 Beads, 1 Entry</span>
+                        </div>
+                        
+                        <div class="flow-caption">Figure 1: Automated Segmentation &amp; Coordinate Extraction</div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- COLUMN 2: REGISTRATION & NAVIGATION LOOP -->
+            <div class="poster-column">
+                
+                <div class="poster-card">
+                    <h3>3. Dual-Pass Image Registration</h3>
+                    <p>To establish perfect alignment, initial volumes are aligned via Center-of-Gravity matching before executing a robust <strong>Dual-Pass Registration Pipeline</strong> using <code>ITK-Elastix</code>:</p>
+                    <ul>
+                        <li><strong>Pass 1: Volumetric Deformation:</strong> The pre-operative volume is warped into the intra-operative domain using consecutive Rigid (Euler) and Non-Rigid B-Spline Transformation Models to maximize similarity metrics.</li>
+                        <li><strong>Pass 2: Analytical Point Mapping:</strong> The inverse homogeneous transformation map (\( ^B T_A \)) is calculated. This allows spatial filters to analytically translate individual voxel indices into continuous physical points:
+                            <div class="math-block">
+                                $${}^{Intra}T_{Pre} = \begin{bmatrix} s \cdot R_{3\times3} & \vec{t}_{3\times1} \\ \vec{0}_{1\times3} & 1 \end{bmatrix}$$
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="poster-card">
+                    <h3>4. EM Tracking Architecture</h3>
+                    <p>The intra-operative application leverages a multi-threaded architecture to separate sensor measurement estimation from rendering loops:</p>
+                    <ul>
+                        <li><strong>NDIReaderThread:</strong> Continuously polls the EM tracking system at $f \approx 10\text{ Hz}$, capturing spatial pose matrices.</li>
+                        <li><strong>TransformWorkerThread:</strong> Recovers instrument orientation properties and applies the calibrated structural sensor-to-tip translation:
+                            <div class="math-block">
+                                $$\vec{p}_{tip} = {}^{EM}T_{sensor} \cdot \vec{p}_{offset}$$
+                            </div>
+                        </li>
+                        <li><strong>Independent GUI Loop:</strong> A decoupled PyQt5 loop triggers visualization updates at 8ms, rendering dynamic tool vectors to prevent latency-induced jitter.</li>
+                    </ul>
+
+                    <!-- GUI IMAGE PLACEHOLDER -->
+                    <div class="gui-image-container">
+                        <!-- VERVANG DE SRC HIERONDER DOOR DE BESTANDSNAAM VAN JOUW SCREENSHOT -->
+                        <img src="jouw_gui_screenshot.png" alt="Plak hier GUI screenshot in" style="min-height: 200px; display: flex; align-items: center; justify-content: center; background-color: #1e293b; color: #94a3b8; font-style: italic; padding: 40px;">
+                        <div class="gui-image-caption">Figure 2: Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics.</div>
+                    </div>
+                    
+                </div>
+
+            </div>
+            
+            <!-- COLUMN 3: QUANTITATIVE RESULTS & DISCUSSION -->
+            <div class="poster-column">
+                
+                <div class="poster-card">
+                    <h3>5. Error Analysis</h3>
+                    <p>The accuracy check specifically evaluates the <strong>Pre-operative to Intra-operative Image Registration</strong>. It matches algorithmic plan projections against ground-truth structures to compute the Target Registration Error (TRE) in millimeters, independent of EM tracking inaccuracies:</p>
+                    <div class="math-block">
+                        $$TRE = \sqrt{\frac{1}{M} \sum_{j=1}^M \left\| T(\vec{p}_j) - \vec{q}_j \right\|^2}$$
+                    </div>
+                    
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Anatomical Landmark</th>
+                                <th>dX (mm)</th>
+                                <th>dY (mm)</th>
+                                <th>dZ (mm)</th>
+                                <th>Total Error (mm)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Planned Entry Point</strong></td>
+                                <td>0.08</td>
+                                <td>0.95</td>
+                                <td>0.61</td>
+                                <td>1.13</td>
+                            </tr>
+                            <tr>
+                                <td>Fiducial Bead 1</td>
+                                <td>7.93</td>
+                                <td>4.27</td>
+                                <td>0.91</td>
+                                <td>9.06</td>
+                            </tr>
+                            <tr>
+                                <td>Fiducial Bead 2</td>
+                                <td>0.07</td>
+                                <td>3.86</td>
+                                <td>0.81</td>
+                                <td>3.94</td>
+                            </tr>
+                            <tr>
+                                <td>Fiducial Bead 3</td>
+                                <td>5.78</td>
+                                <td>2.16</td>
+                                <td>0.60</td>
+                                <td>6.20</td>
+                            </tr>
+                            <tr>
+                                <td>Fiducial Bead 4</td>
+                                <td>3.08</td>
+                                <td>1.82</td>
+                                <td>1.56</td>
+                                <td>3.91</td>
+                            </tr>
+                            <tr>
+                                <td>Fiducial Bead 5</td>
+                                <td>3.20</td>
+                                <td>4.18</td>
+                                <td>4.26</td>
+                                <td>6.77</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mean Box Corners (1-8)</strong></td>
+                                <td>0.70</td>
+                                <td>0.86</td>
+                                <td>1.72</td>
+                                <td>2.31</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <ul>
+                        <li><strong>Fiducial Registration Error (FRE):</strong> During the separate intra-operative phase, real-time Procrustes point registration (EM sensor to patient) yields stable tracking metrics evaluating the RMS distance:
+                            <div class="math-block">
+                                $$FRE = \sqrt{\frac{1}{N} \sum_{i=1}^N \left\| R \vec{p}_i + \vec{t} - \vec{q}_i \right\|^2}$$
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="poster-card">
+                    <h3>6. Discussion &amp; Conclusion</h3>
+                    <p><strong>Latency Controls:</strong> Separating tracking streams from viewport rendering cycles successfully mitigates interface latency under rapid line-of-sight tracking shifts.</p>
+                    <p><strong>Dynamic References:</strong> Incorporating a secondary dynamic tracking reference directly onto the target object updates target parameters concurrently if the phantom shifts, eliminating structural measurement failures.</p>
+                    <p><strong>Conclusion:</strong> A fully automated surgical EM navigation pipeline was engineered. By combining automated density analysis with multi-resolution B-Spline registration, the system minimizes FLE and delivers highly robust trajectory tracking within responsive 3D environments.</p>
+
+                    <div class="footer-references">
+                        <strong>References:</strong> Based on theoretical frameworks from SNT 1 (Point Registration), SNT 2 (Error Analysis), SNT 3 (Sensor Systems), and SNT 5 (Image Registration). Software utilized: <code>ITK-Elastix</code>, <code>PyVistaQt</code>, and <code>SciPy</code>.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

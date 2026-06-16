@@ -442,6 +442,14 @@ class NDIValidationGUI(QtWidgets.QMainWindow):
             self.status_lbl.setText("Registratiefout: verwacht 4 punten in 3D.")
             return
 
+        print("\n=== Geselecteerde punten ===")
+        print("NDI punten (probe-tips):")
+        for i, p in enumerate(P):
+            print(f"  {i+1}: {p}")
+        print("Target punten (CT hoeken):")
+        for i, q in enumerate(Q):
+            print(f"  {i+1}: {q}")
+
         # ── Stap 1: uniforme schaling via alle 6 puntenpaar-afstanden ──
         pairs = list(combinations(range(4), 2))
         dists_P = np.array([np.linalg.norm(P[i] - P[j]) for i, j in pairs], dtype=np.float64)
