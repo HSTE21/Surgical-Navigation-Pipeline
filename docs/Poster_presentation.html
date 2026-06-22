@@ -391,20 +391,19 @@
         
         <!-- HEADER BLOCK -->
         <header class="poster-header">
-            <div class="course-badge">Surgical Navigation Technology (201000262)</div>
-            <h1>Automated Marker Detection, Dual-Registration, and Trajectory Validation for <span>Image Guided Surgery using EM Tracking</span></h1>
-            
+            <h1>Automated Marker Detection and Dual Registration for<br><span class="title-accent">EM-Tracked Image-Guided Surgery</span>
+            </h1>            
             <div class="meta-container">
                 <div class="authors-list">
-                    Hans Stegehuis <span>(M1 Student)</span> &amp; Ghid al-Semaan <span>(M1 Student)</span>
+                    Hans Stegehuis <span>(s2962772)</span> &amp; Ghid Al-Semaan <span>(s2980614)</span>
                 </div>
                 <div class="institution-details">
-                    Department of Technical Medicine &mdash; Medical Imaging &amp; Interventions<br>
-                    University of Twente, Enschede, The Netherlands
+                    Department of Robotics and Mechatronics <br>
+                    University of Twente
                 </div>
             </div>
         </header>
-
+        
         <!-- POSTER CONTENT BODY -->
         <div class="poster-body">
             
@@ -495,6 +494,8 @@
                     </div>
                 </div>
 
+                <!-- removed duplicate UI card; main GUI is shown in Column 2 as Figure 2 -->
+
             </div>
             
             <!-- COLUMN 2: REGISTRATION & NAVIGATION LOOP -->
@@ -528,8 +529,7 @@
 
                     <!-- GUI IMAGE PLACEHOLDER -->
                     <div class="gui-image-container">
-                        <!-- VERVANG DE SRC HIERONDER DOOR DE BESTANDSNAAM VAN JOUW SCREENSHOT -->
-                        <img src="jouw_gui_screenshot.png" alt="Plak hier GUI screenshot in" style="min-height: 200px; display: flex; align-items: center; justify-content: center; background-color: #1e293b; color: #94a3b8; font-style: italic; padding: 40px;">
+                        <img src="images/ui_screenshot.png" alt="Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics" style="min-height: 200px; display: block;">
                         <div class="gui-image-caption">Figure 2: Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics.</div>
                     </div>
                     
@@ -615,6 +615,7 @@
                             <div class="math-block">
                                 $$FRE = \sqrt{\frac{1}{N} \sum_{i=1}^N \left\| R \vec{p}_i + \vec{t} - \vec{q}_i \right\|^2}$$
                             </div>
+                            <p><strong>Measured FRE (this study):</strong> 16.09 mm</p>
                         </li>
                     </ul>
                 </div>
