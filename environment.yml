@@ -10,6 +10,7 @@ dependencies:
   - matplotlib
   - nibabel
   - pyqt
+  - pandas
   - pip
   - pip:
       - itk-elastix

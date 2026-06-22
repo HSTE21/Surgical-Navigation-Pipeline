@@ -46,6 +46,10 @@ This project implements a high-precision pipeline for surgical navigation by ali
 
 ## Visualizations
 
+### Live Tracking Interface
+Real-time 3D visualization and validation UI using NDI EM tracking.
+![UI Screenshot](docs/images/UI_screenshot.png)
+
 ### Pre-operative Planning
 Initial surgical path planning on the original Pre-op CT scan.
 ![Pre-op Planning](output/preop_planning.png)
@@ -53,7 +57,6 @@ Initial surgical path planning on the original Pre-op CT scan.
 ### Intra-operative Validation
 Final validation showing the **Warped Pre-op Plan** and **Transformed Trajectories** projected into the Intra-operative patient space.
 ![Intra-op Validation](output/intraop_planning.png)
-
 ---
 
 ## Output & Persistence
@@ -88,6 +91,7 @@ Located in `scripts/ndi_tracking/`, these tools interface with the NDI Electroma
 - **`read_ndi_stream.py`**: A CLI tool to test the connection and log tracking data. Pressing Enter marks specific "events" in the data stream. Logs are saved to `data/ndi_captures/`.
 - **`gui_tracking_basic.py`**: Real-time 3D visualization of the EM sensor using PyVista and OpenIGTLink.
 - **`gui_tracking_8_points.py`**: Validation tool that guides the user to touch 8 specific points (e.g., box corners) for accuracy assessment.
+- **`experimental_cube_fit/`**: Contains enhanced tracking scripts (`gui_tracking_basic.py` and `gui_tracking_8_points.py`) featuring an advanced noise-reduction algorithm. It forces noisy NDI measurements into a perfect 50x50x50mm axis-aligned cube *prior* to the Kabsch registration, significantly improving tracking stability when the physical phantom box is aligned squarely with the EM tabletop generator. **Pitfall / Caveat:** This algorithm destroys actual rotation data to achieve noise reduction. If the physical box is placed diagonally or rotated relative to the EM generator's axes, the algorithm will squash the measurements into the wrong shape, causing severe registration errors.
 - **`gui_offline_testing.py`**: A simulation/testing environment for verifying registration logic with pre-recorded or simulated tracking data.
 - **`ndi_emulator.py`**: Simulates an NDI OpenIGTLink server for development without physical hardware.
 
