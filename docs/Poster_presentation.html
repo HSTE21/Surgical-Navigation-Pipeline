@@ -529,7 +529,7 @@
 
                     <!-- GUI IMAGE PLACEHOLDER -->
                     <div class="gui-image-container">
-                        <img src="images/ui_screenshot.png" alt="Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics" style="min-height: 200px; display: block;">
+                        <img src="images/UI_screenshot.png" alt="Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics" style="min-height: 200px; display: block;">
                         <div class="gui-image-caption">Figure 2: Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics.</div>
                     </div>
                     
@@ -542,7 +542,7 @@
                 
                 <div class="poster-card">
                     <h3>5. Error Analysis</h3>
-                    <p>The accuracy check specifically evaluates the <strong>Pre-operative to Intra-operative Image Registration</strong>. It matches algorithmic plan projections against ground-truth structures to compute the Target Registration Error (TRE) in millimeters, independent of EM tracking inaccuracies:</p>
+                    <p>The Target Registration Error (TRE) evaluates the <strong>Pre-op to Intra-op Image Registration</strong> by matching mathematical plan projections against ground-truth structures, independent of EM tracking noise:</p>
                     <div class="math-block">
                         $$TRE = \sqrt{\frac{1}{M} \sum_{j=1}^M \left\| T(\vec{p}_j) - \vec{q}_j \right\|^2}$$
                     </div>
@@ -622,8 +622,9 @@
 
                 <div class="poster-card">
                     <h3>6. Discussion &amp; Conclusion</h3>
-                    <p><strong>Latency Controls:</strong> Separating tracking streams from viewport rendering cycles successfully mitigates interface latency under rapid line-of-sight tracking shifts.</p>
-                    <p><strong>Dynamic References:</strong> Incorporating a secondary dynamic tracking reference directly onto the target object updates target parameters concurrently if the phantom shifts, eliminating structural measurement failures.</p>
+                    <p><strong>Error Amplification (High FRE):</strong> The measured FRE of 16.09 mm is largely attributed to ambient EM measurement noise, potential sensor miscalibration, and a narrow registration baseline. The target points (box corners) are only 5 cm apart; because of this small spatial distribution, any noise in the EM coordinates causes severe inaccuracies in both the calculated translation and rotation matrices.</p>
+                    <p><strong>Geometric Constraint (Cube-Fit):</strong> To suppress this severe tracking jitter, an experimental noise-reduction algorithm was implemented that forces noisy EM measurements into a mathematically perfect 50mm cube prior to registration. <em>Limitation:</em> This algorithm assumes the physical phantom is perfectly axis-aligned with the EM tabletop generator; arbitrary rotations would cause severe spatial distortions.</p>
+
                     <p><strong>Conclusion:</strong> A fully automated surgical EM navigation pipeline was engineered. By combining automated density analysis with multi-resolution B-Spline registration, the system minimizes FLE and delivers highly robust trajectory tracking within responsive 3D environments.</p>
 
                     <div class="footer-references">

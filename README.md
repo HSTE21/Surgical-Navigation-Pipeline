@@ -16,31 +16,50 @@
 
 ## Project Overview
 
-This project implements a high-precision pipeline for surgical navigation by aligning Pre-operative CT plans with Intra-operative patient scans. Utilizing a multi-stage registration approach (Euler + B-Spline), the system automatically detects fiducial markers (beads) and phantom boundaries to ensure that planned surgical trajectories are accurately projected onto the current patient situation.
+This project implements a complete, end-to-end surgical navigation framework composed of two distinct phases:
+
+1. **Phase 1: Automated Planning & Registration (Pre-op -> Intra-op)**
+   The system automatically extracts fiducial markers (beads) and phantom boundaries from Pre-operative CT scans. Using a dual-pass ITK-Elastix registration pipeline, it maps planned surgical trajectories onto the Intra-operative patient context, generating a mathematical target plan.
+   
+2. **Phase 2: Real-Time EM Tracking & Execution**
+   The generated plan is directly loaded into a live navigation engine. By connecting to an NDI Electromagnetic (EM) tracking system, the surgeon can visualize the transformed 3D plan and physically guide instruments along the planned trajectories in real-time.
 
 ---
 
 ## Methodology & Technical Highlights
 
-### Box Segmentation (Phantom Structure)
+### Phase 1: Planning (Segmentation & Registration)
 
-* **Method:** Range-based thresholding (665-3850) followed by a **Histogram Peak Detection** approach.
-* **Rationale:** The box is aligned with the scan axes. Analyzing voxel density along X, Y, and Z axes allows for robust boundary detection that ignores isolated noise.
+**Box Segmentation (Phantom Structure)**
+* **Method:** Range-based thresholding (665-3850 HU) followed by a **Histogram Peak Detection** approach.
+* **Rationale:** The box is aligned with the scan axes. Analyzing voxel density along orthogonal axes allows for robust boundary detection that ignores isolated noise.
 * **Precision:** Added **KDTree Snapping** to ensure calculated corners are "snapped" to the nearest actual voxel on the physical box wall.
 
-### Bead Segmentation (Markers)
-
-* **Method:** Intensity thresholding (3820) + Morphological Opening (Ball radius 2) + Watershed Segmentation.
+**Bead Segmentation (Markers)**
+* **Method:** Intensity thresholding (>3820 HU) + Morphological Opening (Ball radius 2) + Watershed Segmentation.
 * **Noise Filtering:** Implemented a **Volume-based Filter** that retains only the 10 largest connected components. This effectively removes artifacts and "spook-beads."
 * **Merging:** Iterative proximity merging (Agglomerative Clustering) to combine 10 detected beads into the 5 master marker centroids.
 
-### Image Registration (ITK-Elastix)
-
-* **Strategy:** Multi-resolution pipeline starting with a **Rigid (Euler)** pass followed by a **Non-rigid (B-Spline)** pass with 10mm grid spacing.
+**Image Registration (ITK-Elastix)**
+* **Strategy:** Multi-resolution pipeline starting with a **Rigid (Euler)** pass followed by a **Non-rigid (B-Spline)** pass.
 * **Initialization:** Used **Center-of-Gravity (COG)** alignment to ensure convergence despite large initial displacements.
-* **Dual-Registration Pass:** To solve software limitations and maximize precision, the script runs registration twice:
-  1. **Pass 1 (Image Warping)**: Aligns Pre-op to Intra-op to generate the correctly warped visualization.
-  2. **Pass 2 (Point Mapping)**: Aligns Intra-op to Pre-op to allow mathematically precise point transformation from planning space to patient space using standard ITK filters.
+* **Dual-Registration Pass:** The engine runs registration twice to overcome ITK limitations:
+  1. **Image Warping**: Aligns Pre-op to Intra-op to generate the correctly warped visual volume.
+  2. **Point Mapping**: Aligns Intra-op to Pre-op to allow precise analytical point transformation from planning space to patient space using standard ITK filters.
+
+### Phase 2: Execution (EM Tracking & Navigation)
+
+**Point-Based Registration (Procrustes / Kabsch)**
+* **Method:** Aligns the dynamic, real-world EM sensor coordinates with the static target coordinates from the CT plan using Singular Value Decomposition (SVD) to find the optimal rigid transformation matrix.
+* **Rationale:** Maps the physical pointer tip directly into the 3D mathematical space of the pre-operative plan.
+
+**Geometric Noise Reduction (Cube-Fit)**
+* **Method:** An advanced experimental constraint algorithm that forces raw, noisy NDI measurements of the phantom box into a mathematically perfect 50x50x50mm axis-aligned cube *prior* to Kabsch registration.
+* **Rationale:** Suppresses Electromagnetic tracking jitter and severely reduces Error Amplification. *(Limitation: Requires the physical box to be placed perfectly parallel to the EM tabletop generator's axes).*
+
+**Asynchronous UI Architecture**
+* **Method:** Decouples the data-fetching layer from the 3D PyVista rendering layer using a multi-threaded architecture (`NDIReaderThread` and `TransformWorkerThread`).
+* **Rationale:** While the EM tracker polls at ~10Hz, the GUI rendering loop operates independently at high speed (8ms updates). This eliminates interface latency, ensuring smooth, real-time surgical guidance even during rapid instrument movements.
 
 ---
 
@@ -75,18 +94,18 @@ All generated artifacts are stored in the `output/` directory.
 
 ## Software Structure
 
-### Core Production Pipeline
+### Phase 1: Planning & Registration Pipeline
 
-These scripts form the final working pipeline:
+These scripts form the offline engine that creates the surgical plan:
 
 1. **`scripts/process_beads_full_pipeline.py`**: Automatically detects the 5 markers in the pre-op scan. *Note: This is automatically called by the registration script, but can be run standalone for verification.*
-2. **`scripts/register_and_transform.py`**: The main engine. Performs dual-registration and maps all planning points (Entry, Beads, Corners) to intra-op space.
+2. **`scripts/register_and_transform.py`**: The main engine. Performs dual-registration and maps all planning points (Entry, Beads, Corners) to intra-op space. Outputs the `transformed_coords.json` file.
 3. **`scripts/visualize_intraop_trajectories.py`**: 3D PyVista validation. Shows the **warped Pre-op plan** and transformed surgical paths (yellow) overlaid on the patient's Intra-op coordinate space.
 4. **`scripts/assess_registration_accuracy.py`**: Final quantitative report (TRE) comparing the transformed plan vs. ground-truth markers in the Intra-op scan.
 
-### NDI Tracking & Real-time Navigation
+### Phase 2: NDI EM Tracking & Execution
 
-Located in `scripts/ndi_tracking/`, these tools interface with the NDI Electromagnetic (EM) tracking system for real-time guidance:
+Located in `scripts/ndi_tracking/`, these tools load the generated `transformed_coords.json` plan and interface with the NDI Electromagnetic (EM) tracker for real-time surgical execution:
 
 - **`read_ndi_stream.py`**: A CLI tool to test the connection and log tracking data. Pressing Enter marks specific "events" in the data stream. Logs are saved to `data/ndi_captures/`.
 - **`gui_tracking_basic.py`**: Real-time 3D visualization of the EM sensor using PyVista and OpenIGTLink.
@@ -124,25 +143,26 @@ conda env create -f environment.yml
 conda activate snt_stable
 ```
 
-### Execution Pipeline
+### Execution Workflow
 
-The entire process is integrated. You only need to run the registration engine to process points and images:
+The entire surgical workflow is strictly divided into the planning phase and the execution phase:
 
+#### Phase 1: Plan Generation (Offline)
 1. **Run Registration & Transformation**:
-   (This step automatically runs bead detection and box corner extraction)
-   
+   (Automatically runs bead detection, extracts corners, and outputs the `transformed_coords.json` plan)
    ```bash
    python scripts/register_and_transform.py
    ```
-2. **Visualize Final Plan on Patient**:
-   
+2. **Verify Plan**:
    ```bash
    python scripts/visualize_intraop_trajectories.py
    ```
-3. **Generate Accuracy Report**:
-   
+
+#### Phase 2: Surgical Execution (Live Navigation)
+3. **Launch Real-Time Tracking UI**:
+   (Connects to the EM tracker, loads the generated plan, and starts live guidance)
    ```bash
-   python scripts/assess_registration_accuracy.py
+   python scripts/ndi_tracking/gui_tracking_basic.py
    ```
 
 ---
