@@ -411,28 +411,18 @@
             <div class="poster-column">
                 
                 <div class="poster-card">
-                    <h3>1. Introduction &amp; Objectives</h3>
-                    <p><strong>Clinical Motivation:</strong> High-precision surgical navigation requires instantaneous point mapping to align pre-operative planning profiles with the dynamic intra-operative patient context.</p>
-                    <p><strong>System Deliverable:</strong> An integrated, low-latency surgical framework utilizing EM sensor systems to translate physical instrument coordinates into 3D rendering domains.</p>
-                    <p><strong>Core Research Question:</strong> Can an algorithmic pipeline successfully combine density analysis with dual-pass image registration to automate coordinate alignment and eliminate manual point registration bias?</p>
+                    <h3>1. Introduction</h3>
+                    <p> This project presents a fully automated framework that consists of three sequential steps. First, a pre-operative CT scan is used to generate automated trajectory plans. Second, these plans are registered to an intra-operative scan representing the patient on the operating table. Third, the electromagnetic tracking tool is registered into this intra-operative image space, mapping real-world surgical instrument movements from the tracker coordinate system into the 3D planning domain for real time guidance.</p>
+                    <p><strong>Research Question:</strong> To what extent can a fully automated surgical navigation pipeline achieve and maintain high spatial accuracy (FRE/TRE) by integrating preoperative trajectory planning, image to image registration, and EM tracker to image registration?</p>
                 </div>
 
                 <div class="poster-card">
-                    <h3>2. Pre-Operative Auto-Segmentation</h3>
-                    <p>To establish target arrays from Pre-op CT imaging, an automated segmentation workflow extracts anatomical landmarks while minimizing the intrinsic <strong>Fiducial Localization Error (FLE)</strong>:</p>
+                    <h3>2. Pre-Operative Planning &amp; Segmentation</h3>
+                    <p>The workflow begins with a Pre-operative CT scan of the phantom. An automated segmentation algorithm extracts two crucial sets of coordinates to formulate the surgical plan:</p>
                     <ul>
-                        <li><strong>Phantom Boundaries:</strong> Volumes are filtered using an structural intensity mask:
-                            <div class="math-block">
-                                $$665 \text{ HU} \leq I(x, y, z) \leq 3850 \text{ HU}$$
-                            </div>
-                        </li>
-                        <li><strong>Histogram Density Extraction:</strong> Cumulative voxel arrays are aggregated along orthogonal axes. Container limits are calculated where densities exceed 1% of peak levels.</li>
-                        <li><strong>KDTree Snapping:</strong> Calculated face coordinates are mapped to the closest physical voxel shell location via spatial distance trees to reduce localization errors:
-                            <div class="math-block">
-                                $$\arg\min_{p \in V_{box}} \| p - p_{calc} \|_2$$
-                            </div>
-                        </li>
-                        <li><strong>Fiducial Spheres Clustering:</strong> Highly dense target beads ($I \gt 3820 \text{ HU}$) are extracted via watershed filtering, retaining the 10 largest volumes prior to iterative proximity merging.</li>
+                        <li><strong>Registration Fiducials (Box Corners):</strong>  The outer boundaries of the phantom are first estimated via density histograms. Because the physical phantom has rounded corners rather than sharp rectangular edges, the extreme coordinates from the histograms do not coincide with the actual surface voxels. Instead, these estimated points float near the boundary without resting on the voxel shell. A KD-Tree nearest neighbor search snaps each candidate coordinate to the closest voxel on the surface.</li>
+                        <li><strong>Surgical Targets (Internal Beads):</strong> Highly dense target structures ($I \gt 3820 \text{ HU}$) are extracted using watershed filtering and proximity merging.</li>
+                        <li><strong>Trajectory Planning:</strong> Surgical paths are mathematically generated as straight lines from the entry point to the center of each target bead.</li>
                     </ul>
 
                     <!-- HOMOGENEOUS FLOWCHART 1 -->
@@ -459,7 +449,7 @@
                                 </div>
                                 <div class="flow-arrow vertical">→</div>
                                 <div class="flow-node highlight-blue">
-                                    <strong>KDTree Snapping</strong>
+                                    <strong>KD-Tree Snapping</strong>
                                     <span>Snap to Surface Voxel</span>
                                 </div>
                             </div>
@@ -467,7 +457,7 @@
                             <!-- Bead Track -->
                             <div class="flow-col">
                                 <div class="flow-node highlight-green">
-                                    <strong>Fiducial Beads</strong>
+                                    <strong>Surgical Target Beads</strong>
                                     <span>Threshold &gt;3820 HU</span>
                                 </div>
                                 <div class="flow-arrow vertical">→</div>
@@ -502,35 +492,43 @@
             <div class="poster-column">
                 
                 <div class="poster-card">
-                    <h3>3. Dual-Pass Image Registration</h3>
-                    <p>To establish perfect alignment, initial volumes are aligned via Center-of-Gravity matching before executing a robust <strong>Dual-Pass Registration Pipeline</strong> using <code>ITK-Elastix</code>:</p>
+                    <h3>3. Pre-Op to Intra-Op Image Registration</h3>
+                    <p>Before navigation can begin, the pre-operative plan (trajectories, targets, and fiducials) must be mapped to the actual patient state on the operating table, represented by an intra-operative CT scan. We achieve this using <code>ITK-Elastix</code>:</p>
                     <ul>
-                        <li><strong>Pass 1: Volumetric Deformation:</strong> The pre-operative volume is warped into the intra-operative domain using consecutive Rigid (Euler) and Non-Rigid B-Spline Transformation Models to maximize similarity metrics.</li>
-                        <li><strong>Pass 2: Analytical Point Mapping:</strong> The inverse homogeneous transformation map (\( ^B T_A \)) is calculated. This allows spatial filters to analytically translate individual voxel indices into continuous physical points:
-                            <div class="math-block">
-                                $${}^{Intra}T_{Pre} = \begin{bmatrix} s \cdot R_{3\times3} & \vec{t}_{3\times1} \\ \vec{0}_{1\times3} & 1 \end{bmatrix}$$
-                            </div>
-                        </li>
+                        <li><strong>Volumetric Image Registration:</strong> The preoperative scan is aligned to the intraoperative scan using automatic center of gravity initialization, followed by rigid and B spline registration.</li>
+                        <li><strong>Plan Transformation:</strong> The resulting transform is applied to the preoperative entry point, target beads, and fiducial corners, transferring these coordinates into the intraoperative image space.</li>
                     </ul>
                 </div>
 
                 <div class="poster-card">
-                    <h3>4. EM Tracking Architecture</h3>
-                    <p>The intra-operative application leverages a multi-threaded architecture to separate sensor measurement estimation from rendering loops:</p>
+                    <h3>4. Point-Based Registration (Procrustes)</h3>
+                    <p>To map EM tracker coordinates (${}^{EM}\mathbf{p}$) to the CT-planning space (${}^{CT}\mathbf{p}$), the Procrustes algorithm is applied to matched fiducials:</p>
                     <ul>
-                        <li><strong>NDIReaderThread:</strong> Continuously polls the EM tracking system at $f \approx 10\text{ Hz}$, capturing spatial pose matrices.</li>
-                        <li><strong>TransformWorkerThread:</strong> Recovers instrument orientation properties and applies the calibrated structural sensor-to-tip translation:
+                        <li><strong>1. Isotropic Scaling ($s=4$):</strong> 
+                            The physical phantom (50x50x50 mm) is scaled to match the CT box (200x200x200 mm).
+                        </li>
+                        <li><strong>2. Centroid Normalization:</strong> Both point sets are translated to their respective Center of Gravity: \(\breve{\mathbf{p}}_n = \mathbf{p}_n - \bar{\mathbf{p}}\).</li>
+                        <li><strong>3. Kabsch Algorithm:</strong> The rotation is computed from the centered fiducial correspondences to achieve the best rigid alignment between both coordinate systems.</li>
+                        <li><strong>4. Translation:</strong> \(\mathbf{t} = {}^{CT}\bar{\mathbf{p}} - \mathbf{R} \cdot (s \cdot {}^{EM}\bar{\mathbf{p}})\).</li>
+                    </ul>
+                </div>
+
+                <div class="poster-card">
+                    <h3>5. EM Tracking Architecture</h3>
+                    <ul>
+                        <li><strong>NDI reader thread:</strong> Continuously polls the EM tracking system at $f \approx 10\text{ Hz}$, capturing spatial pose matrices.</li>
+                        <li><strong>Transform worker thread:</strong> Recovers instrument orientation properties and applies the calibrated structural sensor to tip translation:
                             <div class="math-block">
                                 $$\vec{p}_{tip} = {}^{EM}T_{sensor} \cdot \vec{p}_{offset}$$
                             </div>
                         </li>
-                        <li><strong>Independent GUI Loop:</strong> A decoupled PyQt5 loop triggers visualization updates at 8ms, rendering dynamic tool vectors to prevent latency-induced jitter.</li>
+                        <li><strong>Independent GUI Loop:</strong> A PyQt5 loop triggers visualization updates at 8ms, rendering dynamic tool vectors to prevent latency induced jitter.</li>
                     </ul>
 
                     <!-- GUI IMAGE PLACEHOLDER -->
                     <div class="gui-image-container">
-                        <img src="images/UI_screenshot.png" alt="Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics" style="min-height: 200px; display: block;">
-                        <div class="gui-image-caption">Figure 2: Real-time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics.</div>
+                        <img src="images/UI_screenshot.png" alt="Real time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics" style="min-height: 200px; display: block;">
+                        <div class="gui-image-caption">Figure 2: Real time PyVista GUI displaying 3D trajectory tracking and distance-to-plan metrics.</div>
                     </div>
                     
                 </div>
@@ -541,8 +539,8 @@
             <div class="poster-column">
                 
                 <div class="poster-card">
-                    <h3>5. Error Analysis</h3>
-                    <p>The Target Registration Error (TRE) evaluates the <strong>Pre-op to Intra-op Image Registration</strong> by matching mathematical plan projections against ground-truth structures, independent of EM tracking noise:</p>
+                    <h3>6. Error Analysis</h3>
+                    <p>The Target Registration Error (TRE) evaluates the pre-op to Intra-op Image Registration by matching mathematical plan projections against ground-truth structures, independent of EM tracking noise:</p>
                     <div class="math-block">
                         $$TRE = \sqrt{\frac{1}{M} \sum_{j=1}^M \left\| T(\vec{p}_j) - \vec{q}_j \right\|^2}$$
                     </div>
@@ -611,24 +609,24 @@
                     </table>
 
                     <ul>
-                        <li><strong>Fiducial Registration Error (FRE):</strong> During the separate intra-operative phase, real-time Procrustes point registration (EM sensor to patient) yields stable tracking metrics evaluating the RMS distance:
+                        <li><strong>Fiducial Registration Error (FRE):</strong> The resulting FRE quantifies the root mean square distance between the registered fiducial pairs and thereby evaluates the accuracy of the EM to image registration:
                             <div class="math-block">
-                                $$FRE = \sqrt{\frac{1}{N} \sum_{i=1}^N \left\| R \vec{p}_i + \vec{t} - \vec{q}_i \right\|^2}$$
+                                $$FRE = \sqrt{\frac{1}{N} \sum_{n=1}^N \left\| \mathbf{R} (s \cdot {}^{EM}\mathbf{p}_n) + \mathbf{t} - {}^{CT}\mathbf{p}_n \right\|^2}$$
                             </div>
-                            <p><strong>Measured FRE (this study):</strong> 16.09 mm</p>
+                            <p><strong>Measured FRE:</strong> 16.09 mm</p>
                         </li>
                     </ul>
                 </div>
 
                 <div class="poster-card">
-                    <h3>6. Discussion &amp; Conclusion</h3>
-                    <p><strong>Error Amplification (High FRE):</strong> The measured FRE of 16.09 mm is largely attributed to ambient EM measurement noise, potential sensor miscalibration, and a narrow registration baseline. The target points (box corners) are only 5 cm apart; because of this small spatial distribution, any noise in the EM coordinates causes severe inaccuracies in both the calculated translation and rotation matrices.</p>
-                    <p><strong>Geometric Constraint (Cube-Fit):</strong> To suppress this severe tracking jitter, an experimental noise-reduction algorithm was implemented that forces noisy EM measurements into a mathematically perfect 50mm cube prior to registration. <em>Limitation:</em> This algorithm assumes the physical phantom is perfectly axis-aligned with the EM tabletop generator; arbitrary rotations would cause severe spatial distortions.</p>
+                    <h3>7. Discussion &amp; Conclusion</h3>
+                    <p><strong>Error Amplification (High FRE):</strong> The measured FRE of 16.09 mm is mainly attributed to EM measurement noise, possible sensor miscalibration, and the limited spatial spread of the registration fiducials. Because the box corners are located only 5 cm apart, small perturbations in the EM coordinates can lead to large errors in the estimated rotation and translation.</p>
+                    <p><strong>Geometric Constraint (Cube-Fit):</strong> To reduce this tracking instability, an experimental correction method was introduced that projects the measured EM corner positions onto an ideal 50 mm cube before registration. This improves geometric consistency, but it assumes that the phantom is aligned with the EM field generator and may therefore fail under arbitrary rotations.</p>
 
-                    <p><strong>Conclusion:</strong> A fully automated surgical EM navigation pipeline was engineered. By combining automated density analysis with multi-resolution B-Spline registration, the system minimizes FLE and delivers highly robust trajectory tracking within responsive 3D environments.</p>
+                    <p><strong>Conclusion:</strong> This work demonstrates a fully automated pipeline for preoperative planning, intraoperative image registration, and EM based navigation. While the image registration performed accurately, the overall navigation accuracy remained limited by the EM based point registration.</p>
 
                     <div class="footer-references">
-                        <strong>References:</strong> Based on theoretical frameworks from SNT 1 (Point Registration), SNT 2 (Error Analysis), SNT 3 (Sensor Systems), and SNT 5 (Image Registration). Software utilized: <code>ITK-Elastix</code>, <code>PyVistaQt</code>, and <code>SciPy</code>.
+                        <strong>References:</strong> Based on the course syllabi of SNT 1 (Point Registration), SNT 2 (Error Analysis), SNT 3 (Sensor Systems), and SNT 5 (Image Registration). Software utilized: <code>ITK-Elastix</code>, <code>PyVistaQt</code>, and <code>SciPy</code>.
                     </div>
                 </div>
 
